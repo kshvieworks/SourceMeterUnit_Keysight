@@ -1,7 +1,5 @@
 from pyvisa import *
 from PyQt6 import QtCore
-from PyQt6 import QtWidgets
-import numpy as np
 import time
 import Function_Utility as FU
 
@@ -29,7 +27,7 @@ print(inst.query(':sour1:volt:poin?'))
 class PhotodiodeIV(QtCore.QThread):
     Data = QtCore.pyqtSignal(str)
     Bias = QtCore.pyqtSignal(str)
-    # Time = QtCore.pyqtSignal(str)
+    Time = QtCore.pyqtSignal(str)
 
     def __init__(self, ConfigVar, Handler, parent=None):
         QtCore.QThread.__init__(self)
@@ -65,13 +63,16 @@ class PhotodiodeIV(QtCore.QThread):
         QtCore.QCoreApplication.processEvents()
         FU.SMUControl.Initialization(self.Handler)
         FU.SMUControl.Config(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Mode'], self.ConfigVar['Sense_Mode'], self.ConfigVar['Func'],
-                          self.ConfigVar['Limit'], self.ConfigVar['PLC'], self.ConfigVar['FWire'])
+                          self.ConfigVar['Compliance'], self.ConfigVar['PLC'], self.ConfigVar['FWire'])
         FU.SMUControl.Config_Trig(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Mode'], self.ConfigVar['Vstart'],
                                'TIM', src_period = self.ConfigVar['dt'], src_point = '1', src_delay='0',
                                sen_period = self.ConfigVar['dt'], sen_point = int(self.ConfigVar['ts']/self.ConfigVar['dt'] + 1), sen_delay='0')
 
+        # FU.SMUControl.Set_Trig_Data_Sen(self.Handler, f'{self.ConfigVar["Sense_Mode"]}')
         FU.SMUControl.Set_Trig_Data_Sen(self.Handler, f'TIME, {self.ConfigVar["Sense_Mode"]}')
         DataSize = max(int(1/self.ConfigVar['FPS']/self.ConfigVar['dt']), 1)
+
+        self.Handler.write(':SENS1:CURR:NPLC:AUTO ON')
 
         'Trigger Method'
 
@@ -90,10 +91,9 @@ class PhotodiodeIV(QtCore.QThread):
                                                           int(self.ConfigVar['tRest'] / self.ConfigVar['dt'] + 1))
                     else:
                         self.Bias.emit(f'Bias')
-                        self.Handler.clear()
                         FU.SMUControl.Start_Trig_srcFixed(self.Handler, self.ConfigVar['Channel'],
                                                           self.ConfigVar['Mode'], V_Now,
-                                                          'INF')
+                                                          int(self.ConfigVar['ts'] / self.ConfigVar['dt'] + 1))
 
                     tictic = time.time()
                     while (time.time() - tictic) < DataSize * self.ConfigVar['dt']:
@@ -145,9 +145,8 @@ class PhotodiodeIV(QtCore.QThread):
                 while self.running:
 
                     k = 0
-                    self.Handler.clear()
                     self.Bias.emit(f'V={V_Now}')
-                    FU.SMUControl.Start_Trig_srcFixed(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Mode'], V_Now, 'INF')
+                    FU.SMUControl.Start_Trig_srcFixed(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Mode'], V_Now, int(self.ConfigVar['ts'] / self.ConfigVar['dt'] + 1))
 
                     tictic = time.time()
                     while (time.time() - tictic) < DataSize * self.ConfigVar['dt']:
@@ -193,12 +192,12 @@ class PhotodiodeIV(QtCore.QThread):
         #     while self.program_run:
         #         tic = time.time()
         #         while self.running:
-        #             self.Bias.emit(f'V={V_Now}') if Rest else None
+        #             self.Bias.emit(f'V={V_Now}') if Rest else self.Bias.emit(f'Bias')
         #
         #             while self.program_run and self.running:
         #                 try:
         #                     tictic = time.time()
-        #                     self.Current.emit(FU.SMUControl.Get_Single_Data(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Sense_Mode']))
+        #                     self.Data.emit(FU.SMUControl.Get_Single_Data(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Sense_Mode']))
         #                     self.Time.emit(f'{time.time() - tic}')
         #
         #                     if (~Rest and (time.time() - tic) > self.ConfigVar['ts']) or (Rest and (time.time() - tic) > self.ConfigVar['tRest']):
@@ -224,6 +223,7 @@ class PhotodiodeIV(QtCore.QThread):
         #                     time.sleep(0.1)
         #                     self.stop_measurement()
         #                     FU.SMUControl.Stop(self.Handler, self.ConfigVar['Channel'])
+        #                     self.Bias.emit(f'Finished')
         #                     break
         #
         #
@@ -233,14 +233,11 @@ class PhotodiodeIV(QtCore.QThread):
         #     while self.program_run:
         #         tic = time.time()
         #         while self.running:
+        #             self.Bias.emit(f'V={V_Now}')
         #             while self.program_run and self.running:
         #                 try:
-        #                     self.Current.emit(FU.SMUControl.Get_Single_Data(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Sense_Mode']))
+        #                     self.Data.emit(FU.SMUControl.Get_Single_Data(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Sense_Mode']))
         #                     self.Time.emit(f'{time.time() - tic}')
-        #
-        #                     # SMUControl.Start_Trig_srcFixed(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Mode'],V_Now)
-        #                     # self.Current.emit(SMUControl.Get_Trig_Data(self.Handler, '1', 'CURR'))
-        #                     # self.Time.emit(f'{time.time() - tic},'+SMUControl.Get_Trig_Data(self.Handler, self.ConfigVar['Channel'], 'TIME'))
         #
         #                     if time.time() - tic > self.ConfigVar['ts']:
         #                         tic = time.time()
@@ -250,11 +247,11 @@ class PhotodiodeIV(QtCore.QThread):
         #                     continue
         #
         #             V_Now = V_Now + self.ConfigVar['Vstep']
-        #             self.Bias.emit(f'V={V_Now}')
         #             if V_Now > self.ConfigVar['Vend']:
         #                 time.sleep(0.1)
         #                 self.stop_measurement()
         #                 FU.SMUControl.Stop(self.Handler, self.ConfigVar['Channel'])
+        #                 self.Bias.emit(f'Finished')
         #                 break
         #
         #             FU.SMUControl.Start(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Mode'], V_Now)

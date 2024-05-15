@@ -14,17 +14,15 @@ import UI_Utility as UU
 import Function_Utility as FU
 import Measurement
 import sys
-import numpy as np
-from PyQt6 import QtGui
+import time
 from PyQt6 import QtWidgets
 from PyQt6 import QtCore
-import cv2
-from operator import itemgetter
+
 
 ConfigurationVariables = {'Vstart': -1, 'Vend': 1, 'Vstep': 1, 'ts': 10, 'dt': 25E-6, 'VRest': 0, 'tRest': 1,
                           'Equipment': 'USB0::0x2A8D::0x9201::MY63320391::0::INSTR',
                           'Evaluation': 'Photodiode IV',
-                          'Channel': 1, 'Mode': 'VOLT', 'Sense_Mode': 'CURR', 'Compliance': 100E-6, 'Func': 'DC', 'Limit': 100E-6, 'PLC': 0.01, 'FWire': False,
+                          'Channel': 1, 'Mode': 'VOLT', 'Sense_Mode': 'CURR', 'Compliance': 100E-6, 'Func': 'DC', 'PLC': 0.01, 'FWire': False,
                           'FPS': 5}
 
 
@@ -118,6 +116,7 @@ class MainWindow(QtWidgets.QWidget):
         BTN.setIcon(self.style().standardIcon(QtWidgets.QStyle.StandardPixmap.SP_MediaPlay))
         QtCore.QCoreApplication.processEvents()
         self.SMUThread.Data.connect(self.UpdateSensedValue)
+        self.SMUThread.Time.connect(self.UpdateSensedValue)
         self.SMUThread.Bias.connect(self.UpdateSensedValue)
         # self.SMUThread.start()
 
@@ -139,6 +138,7 @@ class MainWindow(QtWidgets.QWidget):
         if self.SMUThread.running == False:
             BTN.setIcon(self.style().standardIcon(QtWidgets.QStyle.StandardPixmap.SP_MediaPause))
             self.SMUThread.start_measurement()
+            self.PreviewWidget.pg_settings(self.PreviewWidget.PreviewCanvas)
 
             if self.SMUThread.isRunning() == False:
                 self.SMUThread.start()
@@ -147,11 +147,15 @@ class MainWindow(QtWidgets.QWidget):
             BTN.setIcon(self.style().standardIcon(QtWidgets.QStyle.StandardPixmap.SP_MediaPlay))
             self.SMUThread.Pause()
 
+
+
     def StopButtonEvent(self, BTN):
         QtCore.QCoreApplication.processEvents()
-        self.SMUThread.exit()
         # if self.SMUThread.isFinished():
+        self.Handler.clear()
+        time.sleep(0.1)
         FU.SMUControl.Stop(self.Handler, ConfigurationVariables['Channel'])
+        self.SMUThread.exit()
         self.SMUThreadInit(self.EvaluationConfigTab.PauseResume_Button)
         # self.PreviewWidget.PreviewCanvas.scene().removeItem(self.PreviewWidget.legend)
         self.PreviewWidget.pg_settings(self.PreviewWidget.PreviewCanvas)

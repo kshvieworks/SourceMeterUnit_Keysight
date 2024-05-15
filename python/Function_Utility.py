@@ -1,9 +1,3 @@
-from pyvisa import *
-from PyQt6 import QtCore
-from PyQt6 import QtWidgets
-import numpy as np
-import time
-
 
 class SMUControl:
     @staticmethod
@@ -156,6 +150,7 @@ class SMUControl:
     @staticmethod
     def _get_value(inst, channel, mode):
         query = f":MEAS:{mode}? (@{channel})"
+        # query = f":SENS{channel}:DATA:LAT?)"
         return SMUControl.query(inst, query)
 
     """Set Trigger Properties"""

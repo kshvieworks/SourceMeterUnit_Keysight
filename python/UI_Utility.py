@@ -5,10 +5,8 @@ from PyQt6 import QtCore
 import cv2
 import matplotlib
 matplotlib.use('QtAgg')
-import matplotlib.pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.figure import Figure
-import pyqtgraph as pg
 
 
 class WidgetDesign:

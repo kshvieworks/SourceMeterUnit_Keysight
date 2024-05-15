@@ -2,7 +2,6 @@ from PyQt6 import QtWidgets
 from PyQt6 import QtCore
 import numpy as np
 import pyqtgraph as pg
-import matplotlib.pyplot as plt
 from pyvisa import *
 import UI_Utility as UU
 
@@ -83,15 +82,26 @@ class PreviewWidget(QtWidgets.QWidget):
             self.x.append(self.tempX)
             self.y.append(self.tempY)
 
+        # elif value[-1] == '\n':
+        #     data = float(value.strip("\n"))
+        #     self.tempY = np.append(self.tempY, data)
+        #
+        #     if self.tempX.__len__() == self.tempY.__len__():
+        #         self.UpdatePlot(self.PreviewCanvas, self.axinfo[-1], self.tempX, self.tempY)
+        #
+        # else:
+        #     time = float(value)
+        #     self.tempX = np.append(self.tempX, self.t + time)
+
         else:
             data = np.array(value.strip("\n").split(','), dtype=np.float64)
             self.tempX = np.append(self.tempX, self.t + data[1::2])
             self.tempY = np.append(self.tempY, data[::2])
-
+            # if self.tempX.__len__() == self.tempY.__len__():
             self.UpdatePlot(self.PreviewCanvas, self.axinfo[-1], self.tempX, self.tempY)
 
     def UpdatePlot(self, plotinfo, axinfo, x, y) -> None:
-        axinfo.setData(x[::3], y[::3])
+        axinfo.setData(x[::2], y[::2])
 
 
 class DeviceConfigWidget(QtWidgets.QWidget):
@@ -373,6 +383,7 @@ class PhotodiodeIV_EvaluationConfigWidget(QtWidgets.QWidget):
         self.Bias_Rest_Entry.textChanged.connect(lambda checked=False: self.BindConfigurationVariables())
         self.Time_Rest_Entry.textChanged.connect(lambda checked=False: self.BindConfigurationVariables())
         self.Activate_Rest_Button.toggled.connect(lambda checked=False: self.UpdateOptionGroup(self.Activate_Rest_Button, self.Bias_Rest_Entry, self.Time_Rest_Entry))
+        self.Activate_Rest_Button.toggled.connect(lambda checked=False: self.BindConfigurationVariables())
 
     def BindConfigurationVariables(self):
         try:
