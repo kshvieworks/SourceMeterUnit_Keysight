@@ -319,6 +319,7 @@ class MOSFET_IVg(QtCore.QThread):
         while self.program_run:
             while self.running:
                 self.Vd.emit(f'Vd={Vd_Now}')
+                time.sleep(0.1)
                 while self.program_run and self.running:
                     try:
                         tic = time.time()
@@ -348,4 +349,8 @@ class MOSFET_IVg(QtCore.QThread):
                     FU.SMUControl.Stop(self.Handler, Vd_Channel)
                     self.Vd.emit(f'Finished')
                     break
+
                 FU.SMUControl.Start(self.Handler, Vg_Channel, 'VOLT', Vd_Now)
+                Vg_Now = self.ConfigVar['Vstart']
+                FU.SMUControl.Start(self.Handler, Vg_Channel, 'VOLT', Vg_Now)
+

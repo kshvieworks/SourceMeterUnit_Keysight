@@ -153,7 +153,7 @@ class PreviewWidget_MOS(QtWidgets.QWidget):
 
     def UpdateValue(self, value, intervals=2) -> None:
 
-        if value[:2] == 'Vd=':
+        if value[:2] == 'Vd':
             if not hasattr(self, 'tempX'):
                 self.tempX = np.empty(0, dtype=np.float64)
                 self.tempY = np.empty(0, dtype=np.float64)
@@ -177,7 +177,7 @@ class PreviewWidget_MOS(QtWidgets.QWidget):
             self.y.append(self.tempY)
 
         elif value[:2] == 'Vg':
-            data = float(value.strip("\n"))
+            data = float(value[3:].strip("\n"))
             self.tempX = np.append(self.tempX, data)
 
             if self.tempX.__len__() == self.tempY.__len__():

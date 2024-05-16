@@ -60,7 +60,7 @@ class MainWindow(QtWidgets.QWidget):
         PageLayout.addLayout(ConfigLayout)
 
         self.PreviewWidget_PD = UI.PreviewWidget_PD(ConfigurationVariables)
-        self.PreviewWidget_MOS = UI.PreviewWidget.MOS(ConfigurationVariables)
+        self.PreviewWidget_MOS = UI.PreviewWidget_MOS(ConfigurationVariables)
 
         self.PreviewLayout.addWidget(self.PreviewWidget_PD)
         self.PreviewLayout.addWidget(self.PreviewWidget_MOS)
