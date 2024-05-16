@@ -101,6 +101,9 @@ class MainWindow(QtWidgets.QWidget):
         self.EvaluationConfigTab.Stop_Button.clicked.connect(lambda checked=False: self.StopButtonEvent(self.EvaluationConfigTab.PauseResume_Button))
         self.EvaluationConfigTab.Save_Button.clicked.connect(lambda checked=False: self.SaveButtonEvent())
 
+        # Select Evaluation Mode
+        self.DeviceConfigTab.EvaluationItemList_Combobox.currentIndexChanged.connect(lambda checked=False: self.UpdateEvaluationTab(ConfigurationVariables['Evaluation']))
+
     def UpdateConfigureVariable(self, VarList):
         for k in VarList:
             ConfigurationVariables[k] = VarList[k]
@@ -147,8 +150,6 @@ class MainWindow(QtWidgets.QWidget):
             BTN.setIcon(self.style().standardIcon(QtWidgets.QStyle.StandardPixmap.SP_MediaPlay))
             self.SMUThread.Pause()
 
-
-
     def StopButtonEvent(self, BTN):
         QtCore.QCoreApplication.processEvents()
         # if self.SMUThread.isFinished():
@@ -169,6 +170,13 @@ class MainWindow(QtWidgets.QWidget):
             df.to_csv(f"{filepath[0]}", index = True)
         elif filepath[1][-4:-1] == 'txt':
             df.to_csv(f"{filepath[0]}", sep= '\t', index =True)
+
+    def UpdateEvaluationTab(self, item):
+        if item == 'Photodiode IV':
+            self.EvaluationConfigTab = UI.PhotodiodeIV_EvaluationConfigWidget(ConfigurationVariables)
+
+        if item == 'MOSFET I-Vg':
+            self.EvaluationConfigTab = UI.MOSFET_IVg_EvaluationConfigWidget(ConfigurationVariables)
 
 
 if __name__ == '__main__':

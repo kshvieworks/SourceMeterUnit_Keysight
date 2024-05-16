@@ -190,7 +190,7 @@ class DeviceConfigWidget(QtWidgets.QWidget):
         self.EvaluationItemList_Label = QtWidgets.QLabel("Evaluation Item")
         self.EvaluationItemList_Label.setFixedSize(LabelSize[0], LabelSize[1])
         self.EvaluationItemList_Combobox = QtWidgets.QComboBox()
-        self.EvaluationItemList_Combobox.addItems(['Photodiode Time Response', 'Photodiode IV', 'MOSFET I-Vg', 'MOSFET I-Vd'])
+        self.EvaluationItemList_Combobox.addItems(['Photodiode IV', 'MOSFET I-Vg'])
 
         self.Channel_Label = QtWidgets.QLabel("Channel")
         self.Channel_Label.setFixedSize(LabelSize[0], int(LabelSize[1]/3))
@@ -408,4 +408,104 @@ class PhotodiodeIV_EvaluationConfigWidget(QtWidgets.QWidget):
             Entry1.setDisabled(True)
             Entry2.setDisabled(True)
 
+
+class MOSFET_IVg_EvaluationConfigWidget(QtWidgets.QWidget):
+    VarList = QtCore.pyqtSignal(dict)
+
+    def __init__(self, ConfigVar, parent=None):
+        super(MOSFET_IVg_EvaluationConfigWidget, self).__init__(parent)
+
+        Layout = QtWidgets.QVBoxLayout()
+
+        self.initUI(Layout, ConfigVar)
+        self.setLayout(Layout)
+        self.Handler = None
+
+    def initUI(self, Layout, ConfigVar):
+        self.UI_Component(ConfigVar)
+        self.UI_Layout(Layout)
+
+    def UI_Layout(self, Layout):
+
+        Mid_Layout = QtWidgets.QVBoxLayout()
+        Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.Bias_Range_Label, self.Bias_Start_Entry, self.Bias_End_Entry), 'Horizontal'))
+        Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.Bias_Step_Label, self.Bias_Step_Entry), 'Horizontal'))
+        Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.Time_Sampling_Label, self.Time_Sampling_Entry), 'Horizontal'))
+        UU.WidgetDesign.Layout_Frame_Layout(Layout, Mid_Layout, 'Gate Channel Settings')
+
+        Mid_Layout = QtWidgets.QVBoxLayout()
+        Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.Vd_Label, self.Vd_Start_Entry_VRest, self.Vd_End_Entry_ts), 'Horizontal'))
+        Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.Vd_Step_Label, self.Vd_Step_Entry_tRest), 'Horizontal'))
+        UU.WidgetDesign.Layout_Frame_Layout(Layout, Mid_Layout, 'Drain Channel Settings')
+
+        Mid_Layout = QtWidgets.QVBoxLayout()
+        Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.PauseResume_Button, self.Stop_Button, self. Save_Button), 'Horizontal'))
+        UU.WidgetDesign.Layout_Frame_Layout(Layout, Mid_Layout, 'Measurement')
+
+    def UI_Component(self, ConfigVar):
+
+        LabelSize = (150, 30)
+        EntrySize = (200, 30)
+
+        self.Bias_Range_Label = QtWidgets.QLabel("Bias Range [V]")
+        self.Bias_Range_Label.setFixedSize(LabelSize[0], LabelSize[1])
+        self.Bias_Start_Entry = QtWidgets.QLineEdit(clearButtonEnabled=True)
+        UU.WidgetDesign.Init_Entry(self.Bias_Start_Entry, ConfigVar['Vstart'], (EntrySize[0]/2, EntrySize[1]), QtCore.Qt.AlignmentFlag.AlignRight)
+        self.Bias_End_Entry = QtWidgets.QLineEdit(clearButtonEnabled=True)
+        UU.WidgetDesign.Init_Entry(self.Bias_End_Entry, ConfigVar['Vend'], (EntrySize[0]/2, EntrySize[1]), QtCore.Qt.AlignmentFlag.AlignRight)
+
+        self.Bias_Step_Label = QtWidgets.QLabel("Bias Step [V]")
+        self.Bias_Step_Label.setFixedSize(LabelSize[0], LabelSize[1])
+        self.Bias_Step_Entry = QtWidgets.QLineEdit(clearButtonEnabled=True)
+        UU.WidgetDesign.Init_Entry(self.Bias_Step_Entry, ConfigVar['Vstep'], EntrySize, QtCore.Qt.AlignmentFlag.AlignRight)
+
+        self.Time_Sampling_Label = QtWidgets.QLabel("Sampling Time [s]")
+        self.Time_Sampling_Label.setFixedSize(LabelSize[0], LabelSize[1])
+        self.Time_Sampling_Entry = QtWidgets.QLineEdit(clearButtonEnabled=True)
+        UU.WidgetDesign.Init_Entry(self.Time_Sampling_Entry, ConfigVar['dt'], EntrySize, QtCore.Qt.AlignmentFlag.AlignRight)
+
+        self.Vd_Label = QtWidgets.QLabel("Drain Bias Range [V]")
+        self.Vd_Label.setFixedSize(LabelSize[0], LabelSize[1])
+        self.Vd_Start_Entry_VRest = QtWidgets.QLineEdit(clearButtonEnabled=True)
+        UU.WidgetDesign.Init_Entry(self.Vd_Start_Entry_VRest, ConfigVar['VRest'], EntrySize, QtCore.Qt.AlignmentFlag.AlignRight)
+        self.Vd_End_Entry_ts = QtWidgets.QLineEdit(clearButtonEnabled=True)
+        UU.WidgetDesign.Init_Entry(self.Vd_End_Entry_ts, ConfigVar['ts'], EntrySize, QtCore.Qt.AlignmentFlag.AlignRight)
+
+        self.Vd_Step_Label = QtWidgets.QLabel("Drain Bias Step [V]")
+        self.Vd_Step_Label.setFixedSize(LabelSize[0], LabelSize[1])
+        self.Vd_Step_Entry_tRest = QtWidgets.QLineEdit(clearButtonEnabled=True)
+        UU.WidgetDesign.Init_Entry(self.Vd_Step_Entry_tRest, ConfigVar['tRest'], EntrySize, QtCore.Qt.AlignmentFlag.AlignRight)
+
+        self.PauseResume_Button = QtWidgets.QPushButton()
+        self.PauseResume_Button.setIcon(self.style().standardIcon(QtWidgets.QStyle.StandardPixmap.SP_MediaPlay))
+        self.PauseResume_Button.setFixedSize(int((EntrySize[0]+LabelSize[0])/3), int((EntrySize[1]+LabelSize[1])/3))
+
+        self.Stop_Button = QtWidgets.QPushButton()
+        self.Stop_Button.setIcon(self.style().standardIcon(QtWidgets.QStyle.StandardPixmap.SP_MediaStop))
+        self.Stop_Button.setFixedSize(int((EntrySize[0]+LabelSize[0])/3), int((EntrySize[1]+LabelSize[1])/3))
+
+        self.Save_Button = QtWidgets.QPushButton()
+        self.Save_Button.setIcon(self.style().standardIcon(QtWidgets.QStyle.StandardPixmap.SP_DialogSaveButton))
+        self.Save_Button.setFixedSize(int((EntrySize[0]+LabelSize[0])/3), int((EntrySize[1]+LabelSize[1])/3))
+
+        self.Bias_Start_Entry.textChanged.connect(lambda checked=False: self.BindConfigurationVariables())
+        self.Bias_End_Entry.textChanged.connect(lambda checked=False: self.BindConfigurationVariables())
+        self.Bias_Step_Entry.textChanged.connect(lambda checked=False: self.BindConfigurationVariables())
+        self.Time_Sampling_Entry.textChanged.connect(lambda checked=False: self.BindConfigurationVariables())
+        self.Vd_Start_Entry_VRest.textChanged.connect(lambda checked=False: self.BindConfigurationVariables())
+        self.Vd_End_Entry_ts.textChanged.connect(lambda checked=False: self.BindConfigurationVariables())
+        self.Vd_Step_Entry_tRest.textChanged.connect(lambda checked=False: self.BindConfigurationVariables())
+
+    def BindConfigurationVariables(self):
+        try:
+            Vars = {'Vstart': float(self.Bias_Start_Entry.text()),
+                    'Vend': float(self.Bias_End_Entry.text()),
+                    'Vstep': float(self.Bias_Step_Entry.text()),
+                    'dt': float(self.Time_Sampling_Entry.text()),
+                    'VRest': float(self.Vd_Start_Entry_VRest.text()),
+                    'ts': float(self.Vd_End_Entry_ts.text()),
+                    'tRest': float(self.Vd_Step_Entry_tRest.text())}
+            self.VarList.emit(Vars)
+        except ValueError:
+            pass
 
