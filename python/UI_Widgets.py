@@ -215,8 +215,8 @@ class DeviceConfigWidget(QtWidgets.QWidget):
     def UI_Layout(self, Layout):
 
         Mid_Layout = QtWidgets.QVBoxLayout()
-        Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.EquipmentName_Label, self.EquipmentName_Entry), 'Horizontal'))
-        Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.Connection_Button, self.Status_Label), 'Horizontal'))
+        Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.EquipmentName_Label, self.Blank_Label, self.EquipmentName_Entry), 'Horizontal'))
+        Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.Connection_Button, self.Blank_Label, self.Status_Label), 'Horizontal'))
         # Mid_Layout.addWidget(self.ConnectedEquipment_Label, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
         UU.WidgetDesign.Layout_Frame_Layout(Layout, Mid_Layout, 'Equipment Connection')
 
@@ -237,7 +237,7 @@ class DeviceConfigWidget(QtWidgets.QWidget):
         UU.WidgetDesign.Layout_Frame_Layout(Mid_Layout, grp_Layout, '')
 
         grp_Layout = QtWidgets.QHBoxLayout()
-        grp_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.Compliance_Label, self.Compliance_Entry), 'Horizontal'))
+        grp_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.Compliance_Label, self.Compliance_Entry, self.Blank_Label), 'Horizontal'))
         UU.WidgetDesign.Layout_Frame_Layout(Mid_Layout, grp_Layout, '')
 
         grp_Layout = QtWidgets.QHBoxLayout()
@@ -263,14 +263,14 @@ class DeviceConfigWidget(QtWidgets.QWidget):
         self.EquipmentName_Label = QtWidgets.QLabel("Equipment Port")
         self.EquipmentName_Label.setFixedSize(LabelSize[0], LabelSize[1])
         self.EquipmentName_Entry = QtWidgets.QLineEdit(placeholderText='Find Port with ResourceManager().list_resources()', clearButtonEnabled=True)
-        UU.WidgetDesign.Init_Entry(self.EquipmentName_Entry,self.IDN, EntrySize, QtCore.Qt.AlignmentFlag.AlignRight)
+        UU.WidgetDesign.Init_Entry(self.EquipmentName_Entry,self.IDN, (2*EntrySize[0], EntrySize[1]), QtCore.Qt.AlignmentFlag.AlignRight)
         self.EquipmentName_Entry.textChanged.connect(lambda checked=False: self.UpdateIDN())
 
         self.Connection_Button = QtWidgets.QPushButton("Connection")
         self.Connection_Button.setFixedSize(LabelSize[0], LabelSize[1])
         self.Status_Label = QtWidgets.QLabel("DisConnected")
         self.Status_Label.setAlignment(QtCore.Qt.AlignmentFlag.AlignCenter)
-        self.Status_Label.setFixedSize(EntrySize[0], EntrySize[1])
+        self.Status_Label.setFixedSize(2*EntrySize[0], EntrySize[1])
         self.Status_Label.setStyleSheet('background-color: red')
 
         # self.ConnectedEquipment_Label = QtWidgets.QLabel("IDN: ")
@@ -301,8 +301,9 @@ class DeviceConfigWidget(QtWidgets.QWidget):
 
         self.Compliance_Label = QtWidgets.QLabel("Compliance [A]")
         self.Compliance_Label.setFixedSize(LabelSize[0], int(LabelSize[1]/2))
+
         self.Compliance_Entry = QtWidgets.QLineEdit(placeholderText='Write Sensing Limit', clearButtonEnabled=True)
-        UU.WidgetDesign.Init_Entry(self.Compliance_Entry, '100E-6', EntrySize, QtCore.Qt.AlignmentFlag.AlignRight)
+        UU.WidgetDesign.Init_Entry(self.Compliance_Entry, '100E-6', (2*EntrySize[0], EntrySize[1]), QtCore.Qt.AlignmentFlag.AlignRight)
 
         self.Func_Label = QtWidgets.QLabel("Wave Form")
         self.Func_Label.setFixedSize(LabelSize[0], int(LabelSize[1]/3))
@@ -320,6 +321,10 @@ class DeviceConfigWidget(QtWidgets.QWidget):
         self.FWire_Label.setFixedSize(LabelSize[0], int(LabelSize[1]/3))
         self.FWire_RB_OFF = QtWidgets.QRadioButton('OFF')
         self.FWire_RB_ON = QtWidgets.QRadioButton('ON')
+
+        self.Blank_Label = QtWidgets.QLabel("")
+        self.FWire_Label.setFixedSize(LabelSize[0], int(LabelSize[1]/3))
+
 
         self.UI_Default()
     def UI_Default(self):
