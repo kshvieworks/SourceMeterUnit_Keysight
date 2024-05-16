@@ -263,7 +263,8 @@ class PhotodiodeIV(QtCore.QThread):
 
 class MOSFET_IVg(QtCore.QThread):
     Data = QtCore.pyqtSignal(str)
-    Bias = QtCore.pyqtSignal(str)
+    Vg = QtCore.pyqtSignal(str)
+    Vd = QtCore.pyqtSignal(str)
 
     def __init__(self, ConfigVar, Handler, parent=None):
         QtCore.QThread.__init__(self)
@@ -298,81 +299,53 @@ class MOSFET_IVg(QtCore.QThread):
     def run(self):
         QtCore.QCoreApplication.processEvents()
         FU.SMUControl.Initialization(self.Handler)
-        FU.SMUControl.Config(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Mode'], self.ConfigVar['Sense_Mode'], self.ConfigVar['Func'],
+
+        Vg_Channel = '1'
+        Vd_Channel = '2'
+
+        FU.SMUControl.Config(self.Handler, Vg_Channel, self.ConfigVar['Mode'], self.ConfigVar['Sense_Mode'], self.ConfigVar['Func'],
+                          self.ConfigVar['Compliance'], self.ConfigVar['PLC'], self.ConfigVar['FWire'])
+        FU.SMUControl.Config(self.Handler, Vd_Channel, self.ConfigVar['Mode'], self.ConfigVar['Sense_Mode'], self.ConfigVar['Func'],
                           self.ConfigVar['Compliance'], self.ConfigVar['PLC'], self.ConfigVar['FWire'])
 
         'DC Sweep Method'
 
-        # if self.ConfigVar['Rest']:
-        #     V_Now = self.ConfigVar['Vstart']
-        #     Rest = True
-        #     FU.SMUControl.Start(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Mode'], self.ConfigVar['VRest'])
-        #     while self.program_run:
-        #         tic = time.time()
-        #         while self.running:
-        #             self.Bias.emit(f'V={V_Now}') if Rest else self.Bias.emit(f'Bias')
-        #
-        #             while self.program_run and self.running:
-        #                 try:
-        #                     tictic = time.time()
-        #                     self.Data.emit(FU.SMUControl.Get_Single_Data(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Sense_Mode']))
-        #                     self.Time.emit(f'{time.time() - tic}')
-        #
-        #                     if (~Rest and (time.time() - tic) > self.ConfigVar['ts']) or (Rest and (time.time() - tic) > self.ConfigVar['tRest']):
-        #                         time.sleep(0.1)
-        #                         tic = time.time()
-        #                         break
-        #
-        #                     while (time.time() - tictic) < self.ConfigVar['dt']:
-        #                         continue
-        #
-        #                 except VisaIOError:
-        #                     self.Handler.clear()
-        #                     continue
-        #
-        #             if Rest:
-        #                 Rest = False
-        #                 FU.SMUControl.Start(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Mode'], V_Now)
-        #             else:
-        #                 Rest = True
-        #                 FU.SMUControl.Start(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Mode'], self.ConfigVar['VRest'])
-        #                 V_Now = V_Now + self.ConfigVar['Vstep']
-        #                 if V_Now > self.ConfigVar['Vend']:
-        #                     time.sleep(0.1)
-        #                     self.stop_measurement()
-        #                     FU.SMUControl.Stop(self.Handler, self.ConfigVar['Channel'])
-        #                     self.Bias.emit(f'Finished')
-        #                     break
-        #
-        #
-        V_Now = self.ConfigVar['Vstart']
-        FU.SMUControl.Start(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Mode'], V_Now)
+        Vg_Now = self.ConfigVar['Vstart']
+        Vd_Now = self.ConfigVar['VRest']
+
+        FU.SMUControl.Start(self.Handler, Vg_Channel, 'VOLT', Vg_Now)
+        FU.SMUControl.Start(self.Handler, Vd_Channel, 'VOLT', Vd_Now)
+
         while self.program_run:
-            tic = time.time()
             while self.running:
-                self.Bias.emit(f'V={V_Now}')
+                self.Vd.emit(f'Vd={Vd_Now}')
                 while self.program_run and self.running:
                     try:
-                        self.Data.emit(FU.SMUControl.Get_Single_Data(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Sense_Mode']))
-                        self.Time.emit(f'{time.time() - tic}')
+                        tic = time.time()
+                        self.Vg.emit(f'Vg={Vg_Now}')
+                        self.Data.emit(FU.SMUControl.Get_Single_Data(self.Handler, Vd_Channel, 'CURR'))
 
-                        if time.time() - tic > self.ConfigVar['ts']:
-                            tic = time.time()
-                            break
+                        while (time.time() - tic) < self.ConfigVar['dt']:
+                            continue
+
                     except VisaIOError:
                         self.Handler.clear()
                         continue
 
-                V_Now = V_Now + self.ConfigVar['Vstep']
-                if V_Now > self.ConfigVar['Vend']:
+                    Vg_Now = Vg_Now + self.ConfigVar['Vstep']
+
+                    if Vg_Now > self.ConfigVar['Vend']:
+                        time.sleep(0.1)
+                        break
+
+                    FU.SMUControl.Start(self.Handler, Vg_Channel, 'VOLT', Vg_Now)
+
+                Vd_Now = Vd_Now + self.ConfigVar['tRest']
+                if Vd_Now > self.ConfigVar['ts']:
                     time.sleep(0.1)
                     self.stop_measurement()
-                    FU.SMUControl.Stop(self.Handler, self.ConfigVar['Channel'])
-                    self.Bias.emit(f'Finished')
+                    FU.SMUControl.Stop(self.Handler, Vg_Channel)
+                    FU.SMUControl.Stop(self.Handler, Vd_Channel)
+                    self.Vd.emit(f'Finished')
                     break
-
-                FU.SMUControl.Start(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Mode'], V_Now)
-
-                # SMUControl.Start_Trig_srcFixed(self.Handler, self.ConfigVar['Channel'], self.ConfigVar['Mode'], V_Now)
-
-        #
+                FU.SMUControl.Start(self.Handler, Vg_Channel, 'VOLT', Vd_Now)

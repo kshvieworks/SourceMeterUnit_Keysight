@@ -45,10 +45,11 @@ class MainWindow(QtWidgets.QWidget):
 
     # Define Layout
         PageLayout = QtWidgets.QHBoxLayout()
-        PreviewLayout = QtWidgets.QVBoxLayout()
+        self.PreviewLayout = QtWidgets.QStackedLayout()
         ConfigLayout = QtWidgets.QVBoxLayout()
 
-        self.init_Layout(PageLayout, PreviewLayout, ConfigLayout)
+
+        self.init_Layout(PageLayout, self.PreviewLayout, ConfigLayout)
         self.setLayout(PageLayout)
         self.EventProcess()
 
@@ -58,9 +59,14 @@ class MainWindow(QtWidgets.QWidget):
         PageLayout.addLayout(PreviewLayout)
         PageLayout.addLayout(ConfigLayout)
 
-        self.PreviewWidget = UI.PreviewWidget(ConfigurationVariables)
+        self.PreviewWidget_PD = UI.PreviewWidget_PD(ConfigurationVariables)
+        self.PreviewWidget_MOS = UI.PreviewWidget.MOS(ConfigurationVariables)
 
-        PreviewLayout.addWidget(self.PreviewWidget)
+        self.PreviewLayout.addWidget(self.PreviewWidget_PD)
+        self.PreviewLayout.addWidget(self.PreviewWidget_MOS)
+
+        self.PreviewLayout.setCurrentIndex(0)
+        self.PreviewWidget = self.PreviewWidget_PD
 
         self.init_Tab(ConfigLayout)
 
@@ -86,7 +92,7 @@ class MainWindow(QtWidgets.QWidget):
         self.TabHolder.tabBarClicked.connect(lambda checked=False: UU.WidgetFunction.tabClicked(self.DeviceConfigTab))
         self.TabHolder.tabBarClicked.connect(lambda checked=False: UU.WidgetFunction.tabClicked(self.EvaluationConfigTab))
         self.TabHolder.tabBarClicked.connect(lambda checked=False: UU.WidgetFunction.tabClicked(self.EvaluationConfigTab2))
-        self.TabHolder.tabBarClicked.connect(lambda checked=False: self.SMUThreadInit(self.EvaluationConfigTab.PauseResume_Button))
+        self.TabHolder.tabBarClicked.connect(lambda checked=False: self.SMUThreadInit(self.DeviceConfigTab.EvaluationItemList_Combobox.currentText()))
 
     def EventProcess(self):
 
@@ -121,29 +127,31 @@ class MainWindow(QtWidgets.QWidget):
         self.EvaluationConfigTab.Handler = self.Handler
         self.EvaluationConfigTab2.Handler = self.Handler
 
-    def SMUThreadInit(self, BTN):
+    def SMUThreadInit(self, item):
 
-        QtCore.QCoreApplication.processEvents()
-        self.SMUThread = Measurement.PhotodiodeIV(ConfigurationVariables, self.Handler)
-        BTN.setIcon(self.style().standardIcon(QtWidgets.QStyle.StandardPixmap.SP_MediaPlay))
-        QtCore.QCoreApplication.processEvents()
-        self.SMUThread.Data.connect(self.UpdateSensedValue)
-        self.SMUThread.Time.connect(self.UpdateSensedValue)
-        self.SMUThread.Bias.connect(self.UpdateSensedValue)
-        # self.SMUThread.start()
+        if item == 'Photodiode IV':
+            QtCore.QCoreApplication.processEvents()
+            self.SMUThread = Measurement.PhotodiodeIV(ConfigurationVariables, self.Handler)
+            self.EvaluationConfigTab.PauseResume_Button.setIcon(self.style().standardIcon(QtWidgets.QStyle.StandardPixmap.SP_MediaPlay))
+            QtCore.QCoreApplication.processEvents()
+            self.SMUThread.Data.connect(self.UpdateSensedValue)
+            self.SMUThread.Time.connect(self.UpdateSensedValue)
+            self.SMUThread.Bias.connect(self.UpdateSensedValue)
+            # self.SMUThread.start()
+
+        if item == 'MOSFET I-Vg':
+            QtCore.QCoreApplication.processEvents()
+            self.SMUThread = Measurement.MOSFET_IVg(ConfigurationVariables, self.Handler)
+            self.EvaluationConfigTab2.PauseResume_Button.setIcon(self.style().standardIcon(QtWidgets.QStyle.StandardPixmap.SP_MediaPlay))
+            QtCore.QCoreApplication.processEvents()
+            self.SMUThread.Data.connect(self.UpdateSensedValue)
+            self.SMUThread.Vg.connect(self.UpdateSensedValue)
+            self.SMUThread.Vd.connect(self.UpdateSensedValue)
+            # self.SMUThread.start()
 
     def UpdateSensedValue(self, value):
         QtCore.QCoreApplication.processEvents()
         self.PreviewWidget.UpdateValue(value)
-
-                # self.plotinfo, = self.PreviewWidget.PreviewCanvas.axes.plot(self.tempX, self.tempY)
-                # if self.tempX.__len__() == self.tempY.__len__():
-                #     if self.tempX.__len__() % int(1/ConfigurationVariables['FPS']/ConfigurationVariables['dt']) == 1:
-                        # self.plotinfo.set_xdata(self.tempX[::5])
-                        # self.plotinfo.set_ydata(self.tempY[::5])
-                        # self.PreviewWidget.PreviewCanvas.axes.relim()
-                        # plt.pause(ConfigurationVariables['dt'] / 10)
-                        # self.PreviewWidget.PreviewCanvas.draw()
 
     def StartButtonEvent(self, BTN):
         QtCore.QCoreApplication.processEvents()
@@ -166,7 +174,7 @@ class MainWindow(QtWidgets.QWidget):
         time.sleep(0.1)
         FU.SMUControl.Stop(self.Handler, ConfigurationVariables['Channel'])
         self.SMUThread.exit()
-        self.SMUThreadInit(self.EvaluationConfigTab.PauseResume_Button)
+        self.SMUThreadInit(self.DeviceConfigTab.EvaluationItemList_Combobox.currentText())
         # self.PreviewWidget.PreviewCanvas.scene().removeItem(self.PreviewWidget.legend)
         self.PreviewWidget.pg_settings(self.PreviewWidget.PreviewCanvas)
 
@@ -184,10 +192,31 @@ class MainWindow(QtWidgets.QWidget):
         if item == 'Photodiode IV':
             self.TabHolder.setTabEnabled(2, False)
             self.TabHolder.setTabEnabled(1, True)
+            self.Updeate_RB_Enable(True)
+            self.PreviewLayout.setCurrentIndex(0)
+            self.PreviewWidget = self.PreviewWidget_PD
+            self.SMUThreadInit(item)
 
         if item == 'MOSFET I-Vg':
             self.TabHolder.setTabEnabled(1, False)
             self.TabHolder.setTabEnabled(2, True)
+            self.Updeate_RB_Enable(False)
+            self.PreviewLayout.setCurrentIndex(1)
+            self.PreviewWidget = self.PreviewWidget_MOS
+            self.SMUThreadInit(item)
+
+    def Updeate_RB_Enable(self, state):
+            self.DeviceConfigTab.Channel_RB_1.setEnabled(state)
+            self.DeviceConfigTab.Channel_RB_2.setEnabled(state)
+            self.DeviceConfigTab.Mode_RB_VOLT.setEnabled(state)
+            self.DeviceConfigTab.Mode_RB_CURR.setEnabled(state)
+            self.DeviceConfigTab.Sen_Mode_RB_VOLT.setEnabled(state)
+            self.DeviceConfigTab.Sen_Mode_RB_CURR.setEnabled(state)
+            self.DeviceConfigTab.Func_RB_DC.setEnabled(state)
+            self.DeviceConfigTab.Func_RB_PULS.setEnabled(state)
+            self.DeviceConfigTab.FWire_RB_OFF.setEnabled(state)
+            self.DeviceConfigTab.FWire_RB_ON.setEnabled(state)
+
 
 if __name__ == '__main__':
 

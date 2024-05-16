@@ -6,9 +6,9 @@ from pyvisa import *
 import UI_Utility as UU
 
 
-class PreviewWidget(QtWidgets.QWidget):
+class PreviewWidget_PD(QtWidgets.QWidget):
     def __init__(self, ConfigVar, parent=None):
-        super(PreviewWidget, self).__init__(parent)
+        super(PreviewWidget_PD, self).__init__(parent)
 
         self.ConfigVar = ConfigVar
         self.axinfo = []
@@ -102,6 +102,95 @@ class PreviewWidget(QtWidgets.QWidget):
 
     def UpdatePlot(self, plotinfo, axinfo, x, y) -> None:
         axinfo.setData(x[::2], y[::2])
+
+class PreviewWidget_MOS(QtWidgets.QWidget):
+    def __init__(self, ConfigVar, parent=None):
+        super(PreviewWidget_MOS, self).__init__(parent)
+
+        self.ConfigVar = ConfigVar
+        self.axinfo = []
+
+        PreviewLayout = QtWidgets.QVBoxLayout()
+
+        self.initUI(PreviewLayout)
+        self.setLayout(PreviewLayout)
+
+    def initUI(self, Layout):
+
+        self.UI_Component()
+        self.UI_Layout(Layout)
+
+    def UI_Layout(self, Layout):
+        PreviewStackLayout = QtWidgets.QVBoxLayout()
+        PreviewStackLayout.addWidget(self.PreviewCanvas)
+        Layout.addLayout(PreviewStackLayout)
+
+    def UI_Component(self):
+
+        self.PreviewCanvas = pg.PlotWidget()
+        self.legend = self.PreviewCanvas.addLegend()
+
+        self.pg_settings(self.PreviewCanvas)
+
+    def pg_settings(self, plotinfo) -> None:
+
+        plotinfo.clear()
+        n = 1+int((np.abs(self.ConfigVar['ts']-self.ConfigVar['VRest'])/self.ConfigVar['tRest']))
+        self.color = iter([(255*(1-k/n), k*255/n, k*255/n) for k in range(n)])
+        plotinfo.plotItem.setLabels(bottom='Gate Bias [V]', left='Channel Current [A]')
+        plotinfo.setBackground('w')
+        plotinfo.showGrid(x = True, y = True, alpha = 0.3)
+        for k in list(self.axinfo):
+            k.clear()
+        self.axinfo = []
+        try:
+            del self.tempX, self.tempY
+        except AttributeError:
+            pass
+
+    def newplot(self, plotinfo, legend, color) -> object:
+        return plotinfo.plot(name=f'{legend} V', pen=pg.mkPen(color=color))
+
+    def UpdateValue(self, value, intervals=2) -> None:
+
+        if value[:2] == 'Vd=':
+            if not hasattr(self, 'tempX'):
+                self.tempX = np.empty(0, dtype=np.float64)
+                self.tempY = np.empty(0, dtype=np.float64)
+                self.x = []
+                self.y = []
+                self.V = []
+
+            else:
+                self.x.append(self.tempX)
+                self.y.append(self.tempY)
+                self.tempX = np.empty(0, dtype=np.float64)
+                self.tempY = np.empty(0, dtype=np.float64)
+
+            self.V.append(value)
+            self.c = next(self.color)
+            self.axinfo.append(self.newplot(self.PreviewCanvas, value, self.c))
+            print(value)
+
+        elif value == 'Finished':
+            self.x.append(self.tempX)
+            self.y.append(self.tempY)
+
+        elif value[:2] == 'Vg':
+            data = float(value.strip("\n"))
+            self.tempX = np.append(self.tempX, data)
+
+            if self.tempX.__len__() == self.tempY.__len__():
+                self.UpdatePlot(self.PreviewCanvas, self.axinfo[-1], self.tempX, self.tempY)
+
+        else:
+            data = float(value.strip("\n"))
+            self.tempY = np.append(self.tempY, data)
+            if self.tempX.__len__() == self.tempY.__len__():
+                self.UpdatePlot(self.PreviewCanvas, self.axinfo[-1], self.tempX, self.tempY)
+
+    def UpdatePlot(self, plotinfo, axinfo, x, y) -> None:
+        axinfo.setData(x, y)
 
 
 class DeviceConfigWidget(QtWidgets.QWidget):
