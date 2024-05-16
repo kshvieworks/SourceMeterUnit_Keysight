@@ -111,8 +111,8 @@ class MainWindow(QtWidgets.QWidget):
         self.EvaluationConfigTab.Stop_Button.clicked.connect(lambda checked=False: self.StopButtonEvent(self.EvaluationConfigTab.PauseResume_Button))
         self.EvaluationConfigTab.Save_Button.clicked.connect(lambda checked=False: self.SaveButtonEvent())
 
-        self.EvaluationConfigTab2.PauseResume_Button.clicked.connect(lambda checked=False: self.StartButtonEvent(self.EvaluationConfigTab.PauseResume_Button))
-        self.EvaluationConfigTab2.Stop_Button.clicked.connect(lambda checked=False: self.StopButtonEvent(self.EvaluationConfigTab.PauseResume_Button))
+        self.EvaluationConfigTab2.PauseResume_Button.clicked.connect(lambda checked=False: self.StartButtonEvent(self.EvaluationConfigTab2.PauseResume_Button))
+        self.EvaluationConfigTab2.Stop_Button.clicked.connect(lambda checked=False: self.StopButtonEvent(self.EvaluationConfigTab2.PauseResume_Button))
         self.EvaluationConfigTab2.Save_Button.clicked.connect(lambda checked=False: self.SaveButtonEvent())
 
         # Select Evaluation Mode

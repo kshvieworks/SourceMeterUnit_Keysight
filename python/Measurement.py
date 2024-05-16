@@ -350,7 +350,7 @@ class MOSFET_IVg(QtCore.QThread):
                     self.Vd.emit(f'Finished')
                     break
 
-                FU.SMUControl.Start(self.Handler, Vg_Channel, 'VOLT', Vd_Now)
+                FU.SMUControl.Start(self.Handler, Vd_Channel, 'VOLT', Vd_Now)
                 Vg_Now = self.ConfigVar['Vstart']
                 FU.SMUControl.Start(self.Handler, Vg_Channel, 'VOLT', Vg_Now)
 

@@ -215,7 +215,7 @@ class DeviceConfigWidget(QtWidgets.QWidget):
     def UI_Layout(self, Layout):
 
         Mid_Layout = QtWidgets.QVBoxLayout()
-        Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.EquipmentName_Label, self.Blank_Label, self.EquipmentName_Entry), 'Horizontal'))
+        Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.EquipmentName_Label, self.Blank_Label, self.EquipmentName_Combobox), 'Horizontal'))
         Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.Connection_Button, self.Blank_Label, self.Status_Label), 'Horizontal'))
         # Mid_Layout.addWidget(self.ConnectedEquipment_Label, alignment=QtCore.Qt.AlignmentFlag.AlignCenter)
         UU.WidgetDesign.Layout_Frame_Layout(Layout, Mid_Layout, 'Equipment Connection')
@@ -262,9 +262,10 @@ class DeviceConfigWidget(QtWidgets.QWidget):
 
         self.EquipmentName_Label = QtWidgets.QLabel("Equipment Port")
         self.EquipmentName_Label.setFixedSize(LabelSize[0], LabelSize[1])
-        self.EquipmentName_Entry = QtWidgets.QLineEdit(placeholderText='Find Port with ResourceManager().list_resources()', clearButtonEnabled=True)
-        UU.WidgetDesign.Init_Entry(self.EquipmentName_Entry,self.IDN, (2*EntrySize[0], EntrySize[1]), QtCore.Qt.AlignmentFlag.AlignRight)
-        self.EquipmentName_Entry.textChanged.connect(lambda checked=False: self.UpdateIDN())
+        self.EquipmentName_Combobox = QtWidgets.QComboBox()
+        self.EquipmentName_Combobox.setFixedSize(2*EntrySize[0], EntrySize[1])
+        self.EquipmentName_Combobox.addItems(ResourceManager().list_resources())
+        self.EquipmentName_Combobox.currentIndexChanged.connect(lambda checked=False: self.UpdateIDN())
 
         self.Connection_Button = QtWidgets.QPushButton("Connection")
         self.Connection_Button.setFixedSize(LabelSize[0], LabelSize[1])
@@ -323,8 +324,6 @@ class DeviceConfigWidget(QtWidgets.QWidget):
         self.FWire_RB_ON = QtWidgets.QRadioButton('ON')
 
         self.Blank_Label = QtWidgets.QLabel("")
-        self.FWire_Label.setFixedSize(LabelSize[0], int(LabelSize[1]/3))
-
 
         self.UI_Default()
     def UI_Default(self):
@@ -337,7 +336,7 @@ class DeviceConfigWidget(QtWidgets.QWidget):
 
     def BindConfigurationVariables(self):
         Vars = {
-                'Equipment': self.EquipmentName_Entry.text(),
+                'Equipment': self.EquipmentName_Combobox.currentText(),
                 'Evaluation': self.EvaluationItemList_Combobox.currentText(),
                 'Channel': 1 if self.Channel_RB_1.isChecked() else 2,
                 'Mode': 'VOLT' if self.Mode_RB_VOLT.isChecked() else 'CURR',
@@ -350,7 +349,7 @@ class DeviceConfigWidget(QtWidgets.QWidget):
         self.VarList.emit(Vars)
 
     def UpdateIDN(self):
-        self.IDN = self.EquipmentName_Entry.text()
+        self.IDN = self.EquipmentName_Combobox.currentText()
         self.BindConfigurationVariables()
 
     def UpdateComplianceLabel(self):
@@ -368,7 +367,7 @@ class DeviceConfigWidget(QtWidgets.QWidget):
             Label.setText(f"{Equipment.manufacturer_name} {Equipment.model_name}")
             Label.setStyleSheet('background-color: lightgreen')
             # self.ConnectedEquipment_Label.setText(f"IDN: ")
-        except VisaIOError:
+        except AttributeError:
             Equipment = None
             Label.setText("DisConnected")
             Label.setStyleSheet('background-color: red')
@@ -432,17 +431,17 @@ class PhotodiodeIV_EvaluationConfigWidget(QtWidgets.QWidget):
         self.Bias_Step_Label = QtWidgets.QLabel("Bias Step [V]")
         self.Bias_Step_Label.setFixedSize(LabelSize[0], LabelSize[1])
         self.Bias_Step_Entry = QtWidgets.QLineEdit(clearButtonEnabled=True)
-        UU.WidgetDesign.Init_Entry(self.Bias_Step_Entry, ConfigVar['Vstep'], EntrySize, QtCore.Qt.AlignmentFlag.AlignRight)
+        UU.WidgetDesign.Init_Entry(self.Bias_Step_Entry, ConfigVar['Vstep'], (1.3*EntrySize[0], EntrySize[1]), QtCore.Qt.AlignmentFlag.AlignRight)
 
         self.Time_Settling_Label = QtWidgets.QLabel("Settling Time [s]")
         self.Time_Settling_Label.setFixedSize(LabelSize[0], LabelSize[1])
         self.Time_Settling_Entry = QtWidgets.QLineEdit(clearButtonEnabled=True)
-        UU.WidgetDesign.Init_Entry(self.Time_Settling_Entry, ConfigVar['ts'], EntrySize, QtCore.Qt.AlignmentFlag.AlignRight)
+        UU.WidgetDesign.Init_Entry(self.Time_Settling_Entry, ConfigVar['ts'], (1.3*EntrySize[0], EntrySize[1]), QtCore.Qt.AlignmentFlag.AlignRight)
 
         self.Time_Sampling_Label = QtWidgets.QLabel("Sampling Time [s]")
         self.Time_Sampling_Label.setFixedSize(LabelSize[0], LabelSize[1])
         self.Time_Sampling_Entry = QtWidgets.QLineEdit(clearButtonEnabled=True)
-        UU.WidgetDesign.Init_Entry(self.Time_Sampling_Entry, ConfigVar['dt'], EntrySize, QtCore.Qt.AlignmentFlag.AlignRight)
+        UU.WidgetDesign.Init_Entry(self.Time_Sampling_Entry, ConfigVar['dt'], (1.3*EntrySize[0], EntrySize[1]), QtCore.Qt.AlignmentFlag.AlignRight)
 
         self.Activate_Rest_Button = QtWidgets.QCheckBox("Activate Resting Operation")
         self.Activate_Rest_Button.setChecked(True)
@@ -450,12 +449,12 @@ class PhotodiodeIV_EvaluationConfigWidget(QtWidgets.QWidget):
         self.Bias_Rest_Label = QtWidgets.QLabel("Resting Bias [V]")
         self.Bias_Rest_Label.setFixedSize(LabelSize[0], LabelSize[1])
         self.Bias_Rest_Entry = QtWidgets.QLineEdit(clearButtonEnabled=True)
-        UU.WidgetDesign.Init_Entry(self.Bias_Rest_Entry, ConfigVar['VRest'], EntrySize, QtCore.Qt.AlignmentFlag.AlignRight)
+        UU.WidgetDesign.Init_Entry(self.Bias_Rest_Entry, ConfigVar['VRest'], (1.3*EntrySize[0], EntrySize[1]), QtCore.Qt.AlignmentFlag.AlignRight)
 
         self.Time_Rest_Label = QtWidgets.QLabel("Resting Time [s]")
         self.Time_Rest_Label.setFixedSize(LabelSize[0], LabelSize[1])
         self.Time_Rest_Entry = QtWidgets.QLineEdit(clearButtonEnabled=True)
-        UU.WidgetDesign.Init_Entry(self.Time_Rest_Entry, ConfigVar['tRest'], EntrySize, QtCore.Qt.AlignmentFlag.AlignRight)
+        UU.WidgetDesign.Init_Entry(self.Time_Rest_Entry, ConfigVar['tRest'], (1.3*EntrySize[0], EntrySize[1]), QtCore.Qt.AlignmentFlag.AlignRight)
 
         self.PauseResume_Button = QtWidgets.QPushButton()
         self.PauseResume_Button.setIcon(self.style().standardIcon(QtWidgets.QStyle.StandardPixmap.SP_MediaPlay))
@@ -478,6 +477,9 @@ class PhotodiodeIV_EvaluationConfigWidget(QtWidgets.QWidget):
         self.Time_Rest_Entry.textChanged.connect(lambda checked=False: self.BindConfigurationVariables())
         self.Activate_Rest_Button.toggled.connect(lambda checked=False: self.UpdateOptionGroup(self.Activate_Rest_Button, self.Bias_Rest_Entry, self.Time_Rest_Entry))
         self.Activate_Rest_Button.toggled.connect(lambda checked=False: self.BindConfigurationVariables())
+
+        self.Blank_Label = QtWidgets.QLabel("")
+
 
     def BindConfigurationVariables(self):
         try:
@@ -525,12 +527,12 @@ class MOSFET_IVg_EvaluationConfigWidget(QtWidgets.QWidget):
         Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.Bias_Range_Label, self.Bias_Start_Entry, self.Bias_End_Entry), 'Horizontal'))
         Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.Bias_Step_Label, self.Bias_Step_Entry), 'Horizontal'))
         Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.Time_Sampling_Label, self.Time_Sampling_Entry), 'Horizontal'))
-        UU.WidgetDesign.Layout_Frame_Layout(Layout, Mid_Layout, 'Gate Channel Settings')
+        UU.WidgetDesign.Layout_Frame_Layout(Layout, Mid_Layout, 'Gate(Channel 1) Settings')
 
         Mid_Layout = QtWidgets.QVBoxLayout()
         Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.Vd_Label, self.Vd_Start_Entry_VRest, self.Vd_End_Entry_ts), 'Horizontal'))
         Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.Vd_Step_Label, self.Vd_Step_Entry_tRest), 'Horizontal'))
-        UU.WidgetDesign.Layout_Frame_Layout(Layout, Mid_Layout, 'Drain Channel Settings')
+        UU.WidgetDesign.Layout_Frame_Layout(Layout, Mid_Layout, 'Drain(Channel 2) Settings')
 
         Mid_Layout = QtWidgets.QVBoxLayout()
         Mid_Layout.addLayout(UU.WidgetDesign.Layout_Widget((self.PauseResume_Button, self.Stop_Button, self. Save_Button), 'Horizontal'))
@@ -551,24 +553,24 @@ class MOSFET_IVg_EvaluationConfigWidget(QtWidgets.QWidget):
         self.Bias_Step_Label = QtWidgets.QLabel("Bias Step [V]")
         self.Bias_Step_Label.setFixedSize(LabelSize[0], LabelSize[1])
         self.Bias_Step_Entry = QtWidgets.QLineEdit(clearButtonEnabled=True)
-        UU.WidgetDesign.Init_Entry(self.Bias_Step_Entry, ConfigVar['Vstep'], EntrySize, QtCore.Qt.AlignmentFlag.AlignRight)
+        UU.WidgetDesign.Init_Entry(self.Bias_Step_Entry, ConfigVar['Vstep'], (1.3*EntrySize[0], EntrySize[1]), QtCore.Qt.AlignmentFlag.AlignRight)
 
         self.Time_Sampling_Label = QtWidgets.QLabel("Sampling Time [s]")
         self.Time_Sampling_Label.setFixedSize(LabelSize[0], LabelSize[1])
         self.Time_Sampling_Entry = QtWidgets.QLineEdit(clearButtonEnabled=True)
-        UU.WidgetDesign.Init_Entry(self.Time_Sampling_Entry, ConfigVar['dt'], EntrySize, QtCore.Qt.AlignmentFlag.AlignRight)
+        UU.WidgetDesign.Init_Entry(self.Time_Sampling_Entry, ConfigVar['dt'], (1.3*EntrySize[0], EntrySize[1]), QtCore.Qt.AlignmentFlag.AlignRight)
 
         self.Vd_Label = QtWidgets.QLabel("Drain Bias Range [V]")
         self.Vd_Label.setFixedSize(LabelSize[0], LabelSize[1])
         self.Vd_Start_Entry_VRest = QtWidgets.QLineEdit(clearButtonEnabled=True)
-        UU.WidgetDesign.Init_Entry(self.Vd_Start_Entry_VRest, ConfigVar['VRest'], EntrySize, QtCore.Qt.AlignmentFlag.AlignRight)
+        UU.WidgetDesign.Init_Entry(self.Vd_Start_Entry_VRest, ConfigVar['VRest'], (0.5*EntrySize[0], EntrySize[1]), QtCore.Qt.AlignmentFlag.AlignRight)
         self.Vd_End_Entry_ts = QtWidgets.QLineEdit(clearButtonEnabled=True)
-        UU.WidgetDesign.Init_Entry(self.Vd_End_Entry_ts, ConfigVar['ts'], EntrySize, QtCore.Qt.AlignmentFlag.AlignRight)
+        UU.WidgetDesign.Init_Entry(self.Vd_End_Entry_ts, ConfigVar['ts'], (0.5*EntrySize[0], EntrySize[1]), QtCore.Qt.AlignmentFlag.AlignRight)
 
         self.Vd_Step_Label = QtWidgets.QLabel("Drain Bias Step [V]")
         self.Vd_Step_Label.setFixedSize(LabelSize[0], LabelSize[1])
         self.Vd_Step_Entry_tRest = QtWidgets.QLineEdit(clearButtonEnabled=True)
-        UU.WidgetDesign.Init_Entry(self.Vd_Step_Entry_tRest, ConfigVar['tRest'], EntrySize, QtCore.Qt.AlignmentFlag.AlignRight)
+        UU.WidgetDesign.Init_Entry(self.Vd_Step_Entry_tRest, ConfigVar['tRest'], (1.3*EntrySize[0], EntrySize[1]), QtCore.Qt.AlignmentFlag.AlignRight)
 
         self.PauseResume_Button = QtWidgets.QPushButton()
         self.PauseResume_Button.setIcon(self.style().standardIcon(QtWidgets.QStyle.StandardPixmap.SP_MediaPlay))
@@ -589,6 +591,8 @@ class MOSFET_IVg_EvaluationConfigWidget(QtWidgets.QWidget):
         self.Vd_Start_Entry_VRest.textChanged.connect(lambda checked=False: self.BindConfigurationVariables())
         self.Vd_End_Entry_ts.textChanged.connect(lambda checked=False: self.BindConfigurationVariables())
         self.Vd_Step_Entry_tRest.textChanged.connect(lambda checked=False: self.BindConfigurationVariables())
+
+        self.Blank_Label = QtWidgets.QLabel("")
 
     def BindConfigurationVariables(self):
         try:
