@@ -68,22 +68,25 @@ class MainWindow(QtWidgets.QWidget):
     def init_Tab(self, ConfigLayout):
 
         # Make Each Widget
-        TabHolder = QtWidgets.QTabWidget()
+        self.TabHolder = QtWidgets.QTabWidget()
         self.DeviceConfigTab = UI.DeviceConfigWidget(ConfigurationVariables)
         self.EvaluationConfigTab = UI.PhotodiodeIV_EvaluationConfigWidget(ConfigurationVariables)
+        self.EvaluationConfigTab2 = UI.MOSFET_IVg_EvaluationConfigWidget(ConfigurationVariables)
 
         # Make Tabs
-        TabHolder.addTab(self.DeviceConfigTab, "Connection Settings")
-        TabHolder.addTab(self.EvaluationConfigTab, "Evaluation Parameters")
+        self.TabHolder.addTab(self.DeviceConfigTab, "Connection Settings")
+        self.TabHolder.addTab(self.EvaluationConfigTab, "Photodiode")
+        self.TabHolder.addTab(self.EvaluationConfigTab2, "MOSFET")
+        self.TabHolder.setTabEnabled(2, False)
 
         # Add Tabs to Main Window
-        ConfigLayout.addWidget(TabHolder)
+        ConfigLayout.addWidget(self.TabHolder)
 
         # Define Tab Clicked Event
-        TabHolder.tabBarClicked.connect(lambda checked=False: UU.WidgetFunction.tabClicked(self.DeviceConfigTab))
-        TabHolder.tabBarClicked.connect(lambda checked=False: UU.WidgetFunction.tabClicked(self.EvaluationConfigTab))
-        TabHolder.tabBarClicked.connect(lambda checked=False: self.SMUThreadInit(self.EvaluationConfigTab.PauseResume_Button))
-
+        self.TabHolder.tabBarClicked.connect(lambda checked=False: UU.WidgetFunction.tabClicked(self.DeviceConfigTab))
+        self.TabHolder.tabBarClicked.connect(lambda checked=False: UU.WidgetFunction.tabClicked(self.EvaluationConfigTab))
+        self.TabHolder.tabBarClicked.connect(lambda checked=False: UU.WidgetFunction.tabClicked(self.EvaluationConfigTab2))
+        self.TabHolder.tabBarClicked.connect(lambda checked=False: self.SMUThreadInit(self.EvaluationConfigTab.PauseResume_Button))
 
     def EventProcess(self):
 
@@ -91,6 +94,7 @@ class MainWindow(QtWidgets.QWidget):
         self.DeviceConfigTab.VarList.connect(self.UpdateConfigureVariable)
         self.DeviceConfigTab.Handler.connect(self.UpdateHandler)
         self.EvaluationConfigTab.VarList.connect(self.UpdateConfigureVariable)
+        self.EvaluationConfigTab2.VarList.connect(self.UpdateConfigureVariable)
 
         # Device Configuration Tab Event Process
         self.DeviceConfigTab.Connection_Button.clicked.connect(lambda checked=False:
@@ -101,8 +105,12 @@ class MainWindow(QtWidgets.QWidget):
         self.EvaluationConfigTab.Stop_Button.clicked.connect(lambda checked=False: self.StopButtonEvent(self.EvaluationConfigTab.PauseResume_Button))
         self.EvaluationConfigTab.Save_Button.clicked.connect(lambda checked=False: self.SaveButtonEvent())
 
+        self.EvaluationConfigTab2.PauseResume_Button.clicked.connect(lambda checked=False: self.StartButtonEvent(self.EvaluationConfigTab.PauseResume_Button))
+        self.EvaluationConfigTab2.Stop_Button.clicked.connect(lambda checked=False: self.StopButtonEvent(self.EvaluationConfigTab.PauseResume_Button))
+        self.EvaluationConfigTab2.Save_Button.clicked.connect(lambda checked=False: self.SaveButtonEvent())
+
         # Select Evaluation Mode
-        self.DeviceConfigTab.EvaluationItemList_Combobox.currentIndexChanged.connect(lambda checked=False: self.UpdateEvaluationTab(ConfigurationVariables['Evaluation']))
+        self.DeviceConfigTab.EvaluationItemList_Combobox.currentIndexChanged.connect(lambda checked=False: self.UpdateEvaluationTab(self.DeviceConfigTab.EvaluationItemList_Combobox.currentText()))
 
     def UpdateConfigureVariable(self, VarList):
         for k in VarList:
@@ -111,6 +119,7 @@ class MainWindow(QtWidgets.QWidget):
     def UpdateHandler(self, Handler):
         self.Handler = Handler
         self.EvaluationConfigTab.Handler = self.Handler
+        self.EvaluationConfigTab2.Handler = self.Handler
 
     def SMUThreadInit(self, BTN):
 
@@ -173,11 +182,12 @@ class MainWindow(QtWidgets.QWidget):
 
     def UpdateEvaluationTab(self, item):
         if item == 'Photodiode IV':
-            self.EvaluationConfigTab = UI.PhotodiodeIV_EvaluationConfigWidget(ConfigurationVariables)
+            self.TabHolder.setTabEnabled(2, False)
+            self.TabHolder.setTabEnabled(1, True)
 
         if item == 'MOSFET I-Vg':
-            self.EvaluationConfigTab = UI.MOSFET_IVg_EvaluationConfigWidget(ConfigurationVariables)
-
+            self.TabHolder.setTabEnabled(1, False)
+            self.TabHolder.setTabEnabled(2, True)
 
 if __name__ == '__main__':
 
